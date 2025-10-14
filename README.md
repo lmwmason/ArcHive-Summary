@@ -67,5 +67,5 @@ yarn dev
 
 ***
 
-5. License
+### 5. License
 This project is released under the MIT License.
