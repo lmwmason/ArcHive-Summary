@@ -1,4 +1,4 @@
-# **Project Title: ArcHive-Summary - AI-Powered Academic Paper Summarizer**
+# **ArcHive-Summary - AI-Powered Academic Paper Summarizer**
 
 ### **1. Project Overview**
 
