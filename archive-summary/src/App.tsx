@@ -115,14 +115,17 @@ const App: React.FC = () => {
 
     useEffect(() => {
         if (summary && !isLoading && adScriptRef.current) {
+            const ins = adScriptRef.current.querySelector('.kakao_ad_area');
+            if (!ins) return;
+
             const existingScript = adScriptRef.current.querySelector('script');
             if (existingScript) {
                 existingScript.remove();
             }
 
             const script = document.createElement("script");
-            script.src = "https://t1.daumcdn.net/kas/static/ba.min.js";
-            script.charset = "utf-8";
+            script.type = "text/javascript";
+            script.src = "//t1.daumcdn.net/kas/static/ba.min.js";
             script.async = true;
             
             adScriptRef.current.appendChild(script);
@@ -413,7 +416,7 @@ const App: React.FC = () => {
                         >
                             보고서 복사
                         </button>
-                        <div ref={adScriptRef}>
+                        <div ref={adScriptRef} style={{ marginTop: '20px', textAlign: 'center' }}>
                             <ins
                                 className="kakao_ad_area"
                                 style={{ display: "none" }}
