@@ -75,6 +75,7 @@ const summarizeApi = async (input: SummarizeApiInput): Promise<string> => {
             if (!response.ok) {
                 if (response.status === 429 && attempt < MAX_RETRIES - 1) {
                     const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
                     continue; 
                 }
                 throw new Error(`API request failed with status: ${response.status}`);
@@ -112,6 +113,33 @@ const App: React.FC = () => {
     const [pdfBase64, setPdfBase64] = useState<string | null>(null);
     
     const adScriptRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        let script: HTMLScriptElement | null = document.querySelector('script[src*="ba.min.js"]') as HTMLScriptElement | null;
+
+        if (script) {
+            reloadKakaoAd();
+            return;
+        }
+
+        script = document.createElement("script") as HTMLScriptElement;
+        
+        script.setAttribute("src", "//t1.daumcdn.net/kas/static/ba.min.js");
+        script.setAttribute("charset", "utf-8");
+        script.setAttribute("async", "true");
+
+        script.onload = () => {
+            reloadKakaoAd();
+        };
+
+        document.body.appendChild(script);
+        
+        return () => {
+            if (script) {
+                script.onload = null;
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (summary && !isLoading && adScriptRef.current) {
@@ -183,7 +211,6 @@ const App: React.FC = () => {
         combinedInstruction += combinedInstruction.length > 0 ? 
             `. And translate the final summary into ${languageInstruction}.` : 
             `Translate the final summary into ${languageInstruction}.`;
-
 
         let apiInput: SummarizeApiInput;
 
@@ -393,7 +420,12 @@ const App: React.FC = () => {
                         </button>
                     </div>
                 </div>
-
+                <div className="ad-container">
+                <ins className="kakao_ad_area"
+                        data-ad-unit="DAN-pd4hJwVO8AwwRvmS"
+                        data-ad-width="320"
+                        data-ad-height="100"></ins>
+                </div>
                 {!summary && isLoading && (
                     <div className="text-center py-8">
                         <div className="animate-pulse text-xl font-medium text-cyan-400 italic">
@@ -420,7 +452,7 @@ const App: React.FC = () => {
                             <ins
                                 className="kakao_ad_area"
                                 style={{ display: "none" }}
-                                data-ad-unit="DAN-pd4hJwVO8AwwRvmS"
+                                data-ad-unit="DAN-pd4hJwVO8AwwRvmSZZ"
                                 data-ad-width="320"
                                 data-ad-height="50"
                             ></ins>
