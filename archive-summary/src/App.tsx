@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore'; 
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './App.css';
 
-declare const __app_id: string | undefined;
-declare const __firebase_config: string | undefined;
-declare const __initial_auth_token: string | undefined;
+declare global {
+  interface Window {
+    kakao_ad_area: {
+      reloadAll: () => void;
+    } | undefined;
+  }
+}
 
 interface SummarizeApiInput {
     text?: string;
@@ -15,6 +16,12 @@ interface SummarizeApiInput {
     focusInstruction: string;
     mimeType?: string;
 }
+
+const reloadKakaoAd = () => {
+    if (window.kakao_ad_area && typeof window.kakao_ad_area.reloadAll === 'function') {
+        window.kakao_ad_area.reloadAll();
+    }
+};
 
 const LANGUAGES = [
     { code: 'ko', name: '한국어' },
@@ -99,55 +106,28 @@ const App: React.FC = () => {
     const [outputLanguage, setOutputLanguage] = useState('ko');
     const [summary, setSummary] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null); 
     const [activeTab, setActiveTab] = useState<'upload' | 'paste'>('upload'); 
     
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+    
+    const adScriptRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        try {
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
-            if (firebaseConfig) {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-                
-                const attemptAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined') {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth failed:", error);
-                    }
-                };
-
-                const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
-                    if (user) {
-                        setUserId(user.uid);
-                    } else {
-                        setUserId(crypto.randomUUID());
-                    }
-                    console.log(`Firebase Authentication Ready. Current User ID: ${user ? user.uid : 'Anonymous/Fallback'}`);
-                });
-
-                attemptAuth();
-                
-                return () => unsubscribe(); 
-
-            } else {
-                console.warn("Firebase config not found. Running in UI simulation mode.");
-                setUserId('mock-user-id-fallback'); 
+        if (summary && !isLoading && adScriptRef.current) {
+            const existingScript = adScriptRef.current.querySelector('script');
+            if (existingScript) {
+                existingScript.remove();
             }
-        } catch (e) {
-            console.error("Error setting up Firebase:", e);
-            setUserId('error-user-id');
+
+            const script = document.createElement("script");
+            script.src = "https://t1.daumcdn.net/kas/static/ba.min.js";
+            script.charset = "utf-8";
+            script.async = true;
+            
+            adScriptRef.current.appendChild(script);
         }
-    }, []);
+    }, [summary, isLoading]);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -185,10 +165,10 @@ const App: React.FC = () => {
     const handleSummarize = async () => {
         const isPasteModeValid = activeTab === 'paste' && inputText.trim();
         const isUploadModeValid = activeTab === 'upload' && pdfBase64 && selectedFile;
-        const canSummarize = (isPasteModeValid || isUploadModeValid) && userId;
+        const canSummarize = isPasteModeValid || isUploadModeValid;
 
         if (!canSummarize) {
-            console.log('Summarization not possible: Check content, selected file, or user authentication.');
+            console.log('Summarization not possible: Check content or selected file.');
             return;
         }
 
@@ -265,8 +245,7 @@ const App: React.FC = () => {
     );
 
     const isSummarizeDisabled = isLoading || 
-        ((activeTab === 'upload' && !pdfBase64) || (activeTab === 'paste' && !inputText.trim())) || 
-        !userId;
+        ((activeTab === 'upload' && !pdfBase64) || (activeTab === 'paste' && !inputText.trim()));
 
     return (
         <div className="app-container">
@@ -279,15 +258,6 @@ const App: React.FC = () => {
                     <p className="subtitle">
                         Advanced AI Summarization Tool.
                     </p>
-                    {userId ? (
-                        <p className="user-id-display">
-                            User ID: {userId}
-                        </p>
-                    ) : (
-                        <div className="user-id-loading">
-                            Connecting...
-                        </div>
-                    )}
                 </header>
 
                 <div className="tab-navigation">
@@ -366,8 +336,6 @@ const App: React.FC = () => {
                             />
                         </div>
                     )}
-                    
-                    {/* 2단계: 요약 상세 지침 및 언어 선택 */}
                     <div className='flex flex-col sm:flex-row gap-4'>
                          <div className='flex-1'>
                             <label className="input-label focus-instruction-label">
@@ -445,8 +413,18 @@ const App: React.FC = () => {
                         >
                             보고서 복사
                         </button>
+                        <div ref={adScriptRef}>
+                            <ins
+                                className="kakao_ad_area"
+                                style={{ display: "none" }}
+                                data-ad-unit="DAN-DCDdPQyAztWNuXAc"
+                                data-ad-width="320"
+                                data-ad-height="50"
+                            ></ins>
+                        </div>
                     </div>
                 )}
+                
             </div>
         </div>
     );
