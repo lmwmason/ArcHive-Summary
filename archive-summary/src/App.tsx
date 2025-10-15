@@ -373,7 +373,7 @@ const App: React.FC = () => {
                             </label>
                             <textarea
                                 className="pill-textarea-focus"
-                                placeholder="예: 고등학생이 이해할 수 있도록 간단하게 요약해 주세요."
+                                placeholder="예: 고등학생이 이해할 수 있도록 간단하게 요약해."
                                 rows={2}
                                 value={focusInstruction}
                                 onChange={(e) => setFocusInstruction(e.target.value)}
