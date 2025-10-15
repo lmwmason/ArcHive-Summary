@@ -420,7 +420,7 @@ const App: React.FC = () => {
                             <ins
                                 className="kakao_ad_area"
                                 style={{ display: "none" }}
-                                data-ad-unit="DAN-DCDdPQyAztWNuXAc"
+                                data-ad-unit="DAN-pd4hJwVO8AwwRvmS"
                                 data-ad-width="320"
                                 data-ad-height="50"
                             ></ins>
