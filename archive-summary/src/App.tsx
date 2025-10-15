@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Analytics } from "@vercel/analytics/react"
 import './App.css';
 
 declare global {
@@ -135,6 +136,7 @@ const App: React.FC = () => {
         document.body.appendChild(script);
         
         return () => {
+          <Analytics />
             if (script) {
                 script.onload = null;
             }
